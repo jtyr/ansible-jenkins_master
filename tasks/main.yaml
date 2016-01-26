@@ -1,0 +1,68 @@
+---
+
+- name: Test distribution
+  assert:
+    that: >
+      ansible_os_family == "RedHat"
+
+- name: Create YUM repo file
+  yumrepo:
+    name: jenkins
+    baseurl: "{{ jenkins_master_yumrepo_url }}"
+    gpgkey: "{{ jenkins_master_yumrepo_key_url }}"
+    gpgcheck: yes
+    params: "{{ jenkins_master_yumrepo_params }}"
+  tags:
+    - jenkins_master_pkg
+
+- name: Install Jenkins packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: jenkins_master_pkgs
+  notify:
+    - Restart Jenkins service
+  tags:
+    - jenkins_master_pkg
+
+- name: Configure Jenkins service
+  template:
+    src: jenkins.j2
+    dest: /etc/sysconfig/jenkins
+  register: jenkins_master_config_result
+  notify:
+    - Restart Jenkins service
+  tags:
+    - jenkins_master_config
+
+- name: Apply MD5 workaround
+  lineinfile:
+    dest: "{{ jenkins_master_java_security_file }}"
+    regexp: ^(jdk.certpath.disabledAlgorithms=MD2, )MD5, (RSA keySize < 1024)
+    line: '\1\2'
+    backrefs: yes
+    backup: yes
+  register: jenkins_master_md5_woraround_result
+  notify:
+    - Restart Jenkins service
+  when: jenkins_master_md5_workaround
+
+- name: Make sure the Jenkins services is enabled
+  service:
+    name: "{{ jenkins_master_service }}"
+    enabled: yes
+  tags:
+    - jenkins_master_service
+
+- name: Make sure the Jenkins services is running
+  service:
+    name: "{{ jenkins_master_service }}"
+    state: started
+  register: jenkins_master_service_started
+  when: >
+    jenkins_master_config_result is not defined or
+    jenkins_master_md5_woraround_result is not defined or
+    not jenkins_master_config_result.changed or
+    not jenkins_master_md5_workaround_result.changed
+  tags:
+    - jenkins_master_service

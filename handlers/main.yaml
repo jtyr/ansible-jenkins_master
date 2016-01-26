@@ -1,0 +1,9 @@
+---
+
+- name: Restart Jenkins service
+  service:
+    name: "{{ jenkins_service }}"
+    state: restarted
+  when: >
+        jenkins_service_started is not defined or
+        not jenkins_service_started.changed

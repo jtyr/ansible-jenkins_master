@@ -1,0 +1,3 @@
+{{ ansible_managed | comment }}
+
+{{ jenkins_master_config | encode_ini(ucase_prop=True, quote='"') }}
