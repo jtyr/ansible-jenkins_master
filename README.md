@@ -1,7 +1,7 @@
 jenkins_master
 ==============
 
-Ansile role which helps to intall and configure Jenkins Master server.
+Ansible role which helps to intall and configure Jenkins Master server.
 
 The configuraton of the role is done in such way that it should not be
 necessary to change the role for any kind of configuration. All can be
