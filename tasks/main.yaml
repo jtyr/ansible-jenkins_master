@@ -6,7 +6,7 @@
       ansible_os_family == "RedHat"
 
 - name: Create YUM repo file
-  yumrepo:
+  yum_repository:
     name: jenkins
     baseurl: "{{ jenkins_master_yumrepo_url }}"
     gpgkey: "{{ jenkins_master_yumrepo_key_url }}"
