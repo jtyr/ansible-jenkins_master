@@ -19,7 +19,7 @@
   package:
     name: "{{ item }}"
     state: present
-  with_items: jenkins_master_pkgs
+  with_items: "{{ jenkins_master_pkgs }}"
   notify:
     - Restart Jenkins service
   tags:
