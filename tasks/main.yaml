@@ -8,6 +8,7 @@
 - name: Create YUM repo file
   yum_repository:
     name: jenkins
+    description: Jenkins YUM repo
     baseurl: "{{ jenkins_master_yumrepo_url }}"
     gpgkey: "{{ jenkins_master_yumrepo_key_url }}"
     gpgcheck: yes

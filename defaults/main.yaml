@@ -22,7 +22,7 @@ jenkins_master_service: jenkins
 jenkins_master_user: jenkins
 
 # Jenkins YUM repo URL
-jenkins_master_yumrepo_url: http://pkg.jenkins-ci.org/redhat-stable
+jenkins_master_yumrepo_url: http://pkg.jenkins-ci.org/redhat
 
 # Jenkins YUM repo key URL
 jenkins_master_yumrepo_key_url: http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
