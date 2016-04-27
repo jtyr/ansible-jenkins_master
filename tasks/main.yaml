@@ -30,7 +30,6 @@
   template:
     src: jenkins.j2
     dest: /etc/sysconfig/jenkins
-  register: jenkins_master_config_result
   notify:
     - Restart Jenkins service
   tags:
@@ -43,7 +42,6 @@
     line: '\1\2'
     backrefs: yes
     backup: yes
-  register: jenkins_master_md5_woraround_result
   notify:
     - Restart Jenkins service
   when: jenkins_master_md5_workaround
@@ -60,10 +58,5 @@
     name: "{{ jenkins_master_service }}"
     state: started
   register: jenkins_master_service_started
-  when: >
-    jenkins_master_config_result is not defined or
-    jenkins_master_md5_woraround_result is not defined or
-    not jenkins_master_config_result.changed or
-    not jenkins_master_md5_workaround_result.changed
   tags:
     - jenkins_master_service
