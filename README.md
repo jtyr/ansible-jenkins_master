@@ -16,15 +16,59 @@ Usage
 -----
 
 ```
-# Example of basic usage of this role
-- name: Jenkins Master
-  hosts: jenkins-master1
+- name: Example of default usage of this role
+  hosts: jenkins-master
   roles:
     - jenkins_master
 
-# Example of install MD5 workaround
-- name: Jenkins Master
-  hosts: jenkins-master1
+- name: Example of how to customize the installation
+  hosts: jenkins-master
+  vars:
+    # Disable Setup Wizard and CLI
+    jenkins_master_config_jenkins_java_options__custom: >
+      -Djenkins.install.runSetupWizard=false
+      -Djenkins.CLI.disabled=true
+    # Use matrix-auth plugin for authorization
+    jenkins_master_authorization_strategy: matrix
+    # Customize the list of plugins to be installed
+    github-branch-source:
+      # Disable github-branch-source plugin from being instelled by default
+      github-branch-source: null
+      # Install delivery-pipeline-plugin in a specific version
+      delivery-pipeline-plugin:
+        version: 1.0.1
+      # Disable timestamper plugin
+      timestamper:
+        enabled: no
+    # Disable SSL cert validatin when downloading plugins
+    # (can contain all params like in module_utils.fetch_url())
+    jenkins_master_plugins_params__custom:
+      validate_certs: no
+  roles:
+    - jenkins_master
+
+- name: Example of how to configure LDAP authorization
+  hosts: jenkins-master
+  vars:
+    # Disable Setup Wizard and CLI
+    jenkins_master_config_jenkins_java_options__custom: >
+      -Djenkins.install.runSetupWizard=false
+      -Djenkins.CLI.disabled=true
+    # Configure LDAP
+    jenkins_master_ldap:
+      server: ldap://10.0.0.123
+      rootDN: dc=foo,dc=com
+      userSearchBase: cn=users,cn=accounts
+      userSearch: ""
+      groupSearchBase: ""
+      managerDN: uid=serviceaccount,cn=users,cn=accounts,dc=foo,dc=com
+      managerPassword: password
+      inhibitInferRootDN: "false"
+  roles:
+    - jenkins_master
+
+- name: Example of install MD5 workaround
+  hosts: jenkins-master
   vars:
     jenkins_md5_workaround: yes
   roles:
@@ -51,17 +95,17 @@ jenkins_master_pkgs: "{{
   jenkins_master_pkgs__custom
 }}"
 
-# Jenkns service name
+# Jenkins service name
 jenkins_master_service: jenkins
 
 # Jenkins user and group
 jenkins_master_user: jenkins
 
 # Jenkins YUM repo URL
-jenkins_master_yumrepo_url: http://pkg.jenkins-ci.org/redhat-stable
+jenkins_master_yumrepo_url: https://pkg.jenkins.io/redhat
 
 # Jenkins YUM repo key URL
-jenkins_master_yumrepo_key_url: http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
+jenkins_master_yumrepo_key_url: https://pkg.jenkins.io/redhat/jenkins.io.key
 
 # Custom yumrepo params
 jenkins_master_yumrepo_params: {}
@@ -72,14 +116,31 @@ jenkins_master_md5_workaround: no
 # Path to the java.security file needed by the MD5 workaround
 jenkins_master_java_security_file: /usr/lib/jvm/jre/lib/security/java.security
 
+# Name and password for the Jenkins admin user
+jenkins_master_admin_name: admin
+jenkins_master_admin_pass: admin
+
+# Authorization strategy [full_once_logged|matrix]
+# (the matrix flag requires the "matrix-auth" plugin)
+jenkins_master_authorization_strategy: full_once_logged
+
+# LDAP plugin configuration (requires "ldap" plugin)
+jenkins_master_ldap: {}
+
 
 # Values of the default config options
 jenkins_master_config_jenkins_home: /var/lib/jenkins
 jenkins_master_config_jenkins_java_cmd: ""
 jenkins_master_config_jenkins_user: "{{ jenkins_master_user }}"
-jenkins_master_config_jenkins_java_options: -Djava.awt.headless=true
+jenkins_master_config_jenkins_java_options__default: -Djava.awt.headless=true
+jenkins_master_config_jenkins_java_options__custom: ""
+jenkins_master_config_jenkins_java_options: "{{
+  [
+    jenkins_master_config_jenkins_java_options__default,
+    jenkins_master_config_jenkins_java_options__custom
+  ] | join(' ') }}"
 jenkins_master_config_jenkins_port: 8080
-jenkins_master_config_jenkins_listen_address: ""
+jenkins_master_config_jenkins_listen_address: 0.0.0.0
 jenkins_master_config_jenkins_https_port: ""
 jenkins_master_config_jenkins_https_keystore: ""
 jenkins_master_config_jenkins_https_keystore_password: ""
@@ -115,13 +176,48 @@ jenkins_master_config__default:
 # Custom config options
 jenkins_master_config__custom: {}
 
-jenkins_master_config__tmp: {}
-
 # Final Jenkins config
 jenkins_master_config: "{{
-  jenkins_master_config__tmp.update(jenkins_master_config__default) }}{{
-  jenkins_master_config__tmp.update(jenkins_master_config__custom) }}{{
-  jenkins_master_config__tmp }}"
+  jenkins_master_config__default.update(jenkins_master_config__custom) }}{{
+  jenkins_master_config__default }}"
+
+
+# Default list of plugins
+jenkins_master_plugins__default:
+  build-timeout:
+  cloudbees-folder:
+  credentials-binding:
+  git:
+  github-branch-source:
+  matrix-auth:
+  pipeline-stage-view:
+  ssh-slaves:
+  timestamper:
+  workflow-aggregator:
+  ws-cleanup:
+
+# Custom list of plugins
+jenkins_master_plugins__custom: {}
+
+# Final list of plugins
+jenkins_master_plugins: "{{
+  jenkins_master_plugins__default.update(jenkins_master_plugins__custom) }}{{
+  jenkins_master_plugins__default }}"
+
+
+# Default plugin module params
+jenkins_master_plugins_params__default:
+  url_username: "{{ jenkins_master_admin_name }}"
+  url_password: "{{ jenkins_master_admin_pass }}"
+  url: http://{{ jenkins_master_config_jenkins_listen_address }}:{{ jenkins_master_config_jenkins_port }}
+
+# Custom plugin module params
+jenkins_master_plugins_params__custom: {}
+
+# Final plugin module params
+jenkins_master_plugins_params: "{{
+  jenkins_master_plugins_params__default.update(jenkins_master_plugins_params__custom) }}{{
+  jenkins_master_plugins_params__default }}"
 ```
 
 

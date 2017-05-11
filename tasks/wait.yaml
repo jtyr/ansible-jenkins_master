@@ -1,0 +1,14 @@
+---
+
+- name: Wait for Jenkins to start up
+  uri:
+    url: http://{{ jenkins_master_config_jenkins_listen_address }}:{{ jenkins_master_config_jenkins_port }}
+    status_code: 200,403
+    timeout: 5
+  register: jenkins_master_service_status
+  # Keep trying for 5 mins in 5 sec intervals
+  retries: 60
+  delay: 5
+  until: >
+    'status' in jenkins_master_service_status and
+    jenkins_master_service_status['status'] in [200, 403]

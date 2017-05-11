@@ -35,6 +35,30 @@
   tags:
     - jenkins_master_config
 
+- name: Create custom Groovy init.d directory
+  file:
+    path: "{{ jenkins_master_config_jenkins_home }}/init.groovy.d"
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+  tags:
+    - jenkins_master_config
+    - jenkins_master_config_groovy
+
+- name: Deploy Groovy script with basic setup
+  template:
+    src: setup.groovy.j2
+    dest: "{{ jenkins_master_config_jenkins_home }}/init.groovy.d/setup.groovy"
+    owner: jenkins
+    group: jenkins
+    mode: 0640
+  notify:
+    - Restart Jenkins service
+  tags:
+    - jenkins_master_config
+    - jenkins_master_config_groovy
+
 - name: Apply MD5 workaround
   lineinfile:
     dest: "{{ jenkins_master_java_security_file }}"
@@ -60,3 +84,101 @@
   register: jenkins_master_service_started
   tags:
     - jenkins_master_service
+
+- include: wait.yaml
+  when: >
+    jenkins_master_service_started is defined and
+    jenkins_master_service_started.changed
+  tags:
+    - jenkins_master_service
+
+- name: Install plugins without a specific version
+  jenkins_plugin:
+    name: "{{ item.key }}"
+    params: "{{ jenkins_master_plugins_params }}"
+  register: jenkins_master_plugin_unversioned
+  when: >
+    item.value == None or
+    'version' not in item.value
+  with_dict: "{{ jenkins_master_plugins }}"
+  tags:
+    - jenkins_master_plugins
+
+- name: Install plugins with a specific version
+  jenkins_plugin:
+    name: "{{ item.key }}"
+    version: "{{ item.value['version'] }}"
+    params: "{{ jenkins_master_plugins_params }}"
+  register: jenkins_master_plugin_versioned
+  when: >
+    item.value != None and
+    'version' in item.value
+  with_dict: "{{ jenkins_master_plugins }}"
+  tags:
+    - jenkins_master_plugins
+
+- name: Initiate the fact
+  set_fact:
+    jenkins_restart_required: no
+  tags:
+    - jenkins_master_plugins
+
+- name: Check if restart is required by any of the versioned plugins
+  set_fact:
+    jenkins_restart_required: yes
+  when: item.changed
+  with_items: "{{ jenkins_master_plugin_versioned.results }}"
+  tags:
+    - jenkins_master_plugins
+
+- name: Check if restart is required by any of the unversioned plugins
+  set_fact:
+    jenkins_restart_required: yes
+  when: item.changed
+  with_items: "{{ jenkins_master_plugin_unversioned.results }}"
+  tags:
+    - jenkins_master_plugins
+
+- name: Restart Jenkins if required
+  service:
+    name: jenkins
+    state: restarted
+  when: jenkins_restart_required
+  tags:
+    - jenkins_master_plugins
+
+- include: wait.yaml
+  when: jenkins_restart_required
+  tags:
+    - jenkins_master_plugins
+
+- name: Reset the fact
+  set_fact:
+    jenkins_restart_required: no
+  when: jenkins_restart_required
+  tags:
+    - jenkins_master_plugins
+
+- name: Plugin pinning
+  jenkins_plugin:
+    name: "{{ item.key }}"
+    state: "{{ 'pinned' if item.value['pinned'] else 'unpinned'}}"
+    params: "{{ jenkins_master_plugins_params }}"
+  when: >
+    item.value != None and
+    'pinned' in item.value
+  with_dict: "{{ jenkins_master_plugins }}"
+  tags:
+    - jenkins_master_plugins
+
+- name: Plugin enabling
+  jenkins_plugin:
+    name: "{{ item.key }}"
+    state: "{{ 'enabled' if item.value['enabled'] else 'disabled'}}"
+    params: "{{ jenkins_master_plugins_params }}"
+  when: >
+    item.value != None and
+    'enabled' in item.value
+  with_dict: "{{ jenkins_master_plugins }}"
+  tags:
+    - jenkins_master_plugins
