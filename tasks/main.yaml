@@ -12,7 +12,7 @@
     baseurl: "{{ jenkins_master_yumrepo_url }}"
     gpgkey: "{{ jenkins_master_yumrepo_key_url }}"
     gpgcheck: yes
-    params: "{{ jenkins_master_yumrepo_params }}"
+  args: "{{ jenkins_master_yumrepo_params }}"
   tags:
     - jenkins_master_pkg
 
@@ -95,7 +95,7 @@
 - name: Install plugins without a specific version
   jenkins_plugin:
     name: "{{ item.key }}"
-    params: "{{ jenkins_master_plugins_params }}"
+  args: "{{ jenkins_master_plugins_params }}"
   register: jenkins_master_plugin_unversioned
   when: >
     item.value == None or
@@ -108,7 +108,7 @@
   jenkins_plugin:
     name: "{{ item.key }}"
     version: "{{ item.value['version'] }}"
-    params: "{{ jenkins_master_plugins_params }}"
+  args: "{{ jenkins_master_plugins_params }}"
   register: jenkins_master_plugin_versioned
   when: >
     item.value != None and
@@ -163,7 +163,7 @@
   jenkins_plugin:
     name: "{{ item.key }}"
     state: "{{ 'pinned' if item.value['pinned'] else 'unpinned'}}"
-    params: "{{ jenkins_master_plugins_params }}"
+  args: "{{ jenkins_master_plugins_params }}"
   when: >
     item.value != None and
     'pinned' in item.value
@@ -175,7 +175,7 @@
   jenkins_plugin:
     name: "{{ item.key }}"
     state: "{{ 'enabled' if item.value['enabled'] else 'disabled'}}"
-    params: "{{ jenkins_master_plugins_params }}"
+  args: "{{ jenkins_master_plugins_params }}"
   when: >
     item.value != None and
     'enabled' in item.value
