@@ -15,7 +15,7 @@ Please report any issues or send PR.
 Usage
 -----
 
-```
+```yaml
 - name: Example of default usage of this role
   hosts: jenkins-master
   roles:
@@ -31,19 +31,30 @@ Usage
     # Use matrix-auth plugin for authorization
     jenkins_master_authorization_strategy: matrix
     # Customize the list of plugins to be installed
-    github-branch-source:
-      # Disable github-branch-source plugin from being instelled by default
-      github-branch-source: null
+    jenkins_master_plugins:
+      # Install several plugins in their latest version
+      build-timeout:
+      cloudbees-folder:
+      credentials-binding:
+      git:
+      github-branch-source:
+      matrix-auth:
+      pipeline-stage-view:
+      ssh-slaves:
+      workflow-aggregator:
+      ws-cleanup:
+      # Install timestamper plugin but keep it disabled
+      timestamper:
+        enabled: no
       # Install delivery-pipeline-plugin in a specific version
       delivery-pipeline-plugin:
         version: 1.0.1
-      # Disable timestamper plugin
-      timestamper:
-        enabled: no
     # Disable SSL cert validatin when downloading plugins
     # (can contain all params like in module_utils.fetch_url())
     jenkins_master_plugins_params__custom:
       validate_certs: no
+    # Set custom admin password
+    jenkins_master_admin_pass: MyAdmin123
   roles:
     - jenkins_master
 
@@ -79,7 +90,7 @@ Usage
 Role variables
 --------------
 
-```
+```yaml
 # Jenkins package to be installed (you can specify exact version here)
 jenkins_master_pkgs__default:
   - jenkins
@@ -182,27 +193,8 @@ jenkins_master_config: "{{
   jenkins_master_config__default }}"
 
 
-# Default list of plugins
-jenkins_master_plugins__default:
-  build-timeout:
-  cloudbees-folder:
-  credentials-binding:
-  git:
-  github-branch-source:
-  matrix-auth:
-  pipeline-stage-view:
-  ssh-slaves:
-  timestamper:
-  workflow-aggregator:
-  ws-cleanup:
-
-# Custom list of plugins
-jenkins_master_plugins__custom: {}
-
-# Final list of plugins
-jenkins_master_plugins: "{{
-  jenkins_master_plugins__default.update(jenkins_master_plugins__custom) }}{{
-  jenkins_master_plugins__default }}"
+# Final list of plugins (see README for more details)
+jenkins_master_plugins: {}
 
 
 # Default plugin module params

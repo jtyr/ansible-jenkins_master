@@ -102,27 +102,8 @@ jenkins_master_config: "{{
   jenkins_master_config__default }}"
 
 
-# Default list of plugins
-jenkins_master_plugins__default:
-  build-timeout:
-  cloudbees-folder:
-  credentials-binding:
-  git:
-  github-branch-source:
-  matrix-auth:
-  pipeline-stage-view:
-  ssh-slaves:
-  timestamper:
-  workflow-aggregator:
-  ws-cleanup:
-
-# Custom list of plugins
-jenkins_master_plugins__custom: {}
-
-# Final list of plugins
-jenkins_master_plugins: "{{
-  jenkins_master_plugins__default.update(jenkins_master_plugins__custom) }}{{
-  jenkins_master_plugins__default }}"
+# Final list of plugins (see README for more details)
+jenkins_master_plugins: {}
 
 
 # Default plugin module params
